@@ -4,7 +4,7 @@ calc: lex.yy.c y.tab.c
 lex.yy.c: y.tab.c calc.l
 	lex calc.l
 
-y.tab.c: calc.y
+y.tab.c: calc.y main.c
 	yacc -d calc.y
 
 clean: 

@@ -5,9 +5,10 @@ void yyerror (char *s);
 #include <stdlib.h>
 %}
 
-%union {int num; char sym;}         /* Yacc definitions */
+%union {int num; char sym; char* identifier; char paren}         /* Yacc definitions */
 %start line
 %token exit_command
+%token print_command
 %token <num> number
 %type <num> line term expr
 %token <sym> symbol
@@ -17,7 +18,8 @@ void yyerror (char *s);
 %%
 
 /* descriptions of expected inputs     corresponding actions (in C) */
-line    : exit_command ';'		{exit(EXIT_SUCCESS);}
+line    : exit_command          {exit(EXIT_SUCCESS);}
+        | print_command expr    { printf("printing %d\n", $2); }
         | expr                  {$$ = $1;}
         | qwe                   {$$ = $1;}
         ;
