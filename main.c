@@ -3,7 +3,7 @@ extern char *yytext;
 int main() {
     int token = yylex();
     while (token) {
-        printf("%i - ", token);
+        printf("%i - %s\n", token, yytext);
         token = yylex();
     }
     return 0;
