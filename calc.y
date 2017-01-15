@@ -8,26 +8,31 @@ void yyerror (char *s);
 %union {
     int num;
     char* identifier;
+    char symbol;
 }         /* Yacc definitions */
 /*%union {int num; char sym; char* identifier; char paren}         [> Yacc definitions <]*/
 %start line
 %token exit_command
 %token print_command
-%token <space> space_
 %token <num> number
 %token <identifier> identifier_
 %token l_parenthes
 %token r_parenthes
+%token <symbol> l_brace
+%token r_brace
 
 %token keyword_class
 %token keyword_struct
 %token keyword_typedef
 %token keyword_alias
 %token keyword_template
+%token keyword_nothrow
+%token keyword_pure
 
 %token sym_dot_comma
 %token sym_comma
 %token keyword_this
+%token keyword_return
 %token spec_auto
 
 %token spec_final
@@ -67,30 +72,26 @@ void yyerror (char *s);
 
 %type <num> line term expr
 %type <identifier> classDeclaration
-/*%token month*/
 
 %%
 
 /* descriptions of expected inputs     corresponding actions (in C) */
-line    : exit_command          {exit(EXIT_SUCCESS);}
-        | print_command expr    { printf("printing %d\n", $2); }
-        | expr                  {$$ = $1;}
+line    : exit_command                  {exit(EXIT_SUCCESS);}
+        | print_command expr            { printf("printing %d\n", $2); }
+        | expr                          {$$ = $1;}
         ;
 
 expr    : l_parenthes expr r_parenthes            { $$ = $2; }
         | term                  { $$ = $1; }
-        | classDeclaration      { print("found declaration %s", $1); }
+        | classDeclaration      { printf("found declaration %s", $1);}
         ;
 
-/*qwe     : identifier_                { $$ = $1; }*/
-        /*| identifier_ qwe            { $$ = $1; }*/
-        /*;*/
-classDeclaration : keyword_class identifier_ sym_dot_comma  { $$ = $2; }
-                 | keyword_class identifier_ aggregateBody  { $$ = $2; }
+classDeclaration : keyword_class identifier_ sym_dot_comma  { $$ = $2; } 
+                 | keyword_class identifier_ aggregateBody { $$ = $2; }
                  ;
 
-aggregateBody : '{''}'
-              | '{' declDefs '}'
+aggregateBody : l_brace r_brace
+              | l_brace declDefs r_brace
               ;
 
 declDefs : declDef
@@ -113,18 +114,23 @@ parametersList : parameter
                ;
 
 /* TODO: implement remaining rules. See: http://dlang.org/spec/function.html#Parameters */
-parameter : inOutopt basicType Declarator
+parameter : inOut basicType declarator
+          | basicType declarator
           ;
 
-inOutopt : spec_auto
-         | spec_final
-         | spec_in
-         | spec_lazy
-         | spec_out
-         | spec_ref
-         | spec_scope
-         | typeCtor
-         ;
+inOut : inOutX
+      | inOut inOutX
+      ;
+
+inOutX : spec_auto
+      | spec_final
+      | spec_in
+      | spec_lazy
+      | spec_out
+      | spec_ref
+      | spec_scope
+      | typeCtor
+      ;
 
 typeCtor : spec_const
          | spec_immutable
@@ -172,11 +178,71 @@ basicType2 : basicType2X
            | basicType2X basicType2
            ;
 
+/* TODO: implement remaining rules. See: https://dlang.org/spec/grammar.html#BasicType2X */
 basicType2X: '*'
+           | '['']'
            ;
 
-altDeclarator:
-             ;
+altDeclarator : basicType2 identifier_ altDeclaratorSuffixes
+              | identifier_ altDeclaratorSuffixes
+              | basicType2 l_parenthes altDeclaratorX r_parenthes
+              | l_parenthes altDeclaratorX r_parenthes
+              | basicType2 l_parenthes altDeclaratorX r_parenthes altFuncDeclaratorSuffix
+              | l_parenthes altDeclaratorX r_parenthes altFuncDeclaratorSuffix
+              | basicType2 l_parenthes altDeclaratorX r_parenthes altDeclaratorSuffixes
+              | l_parenthes altDeclaratorX r_parenthes altDeclaratorSuffixes
+              ;
+
+altDeclaratorX : basicType2 identifier_
+               | identifier_
+               | basicType2 identifier_ altFuncDeclaratorSuffix
+               | identifier_ altFuncDeclaratorSuffix
+               | altDeclarator
+               ;
+
+altFuncDeclaratorSuffix: parameters memberFunctionAttributes
+                       | parameters
+                       ;
+
+altDeclaratorSuffixes : altDeclaratorSuffix
+                      | altDeclaratorSuffix altDeclaratorSuffixes
+                      ;
+
+/* TODO: implement remaining rules. See: https://dlang.org/spec/grammar.html#AltFuncDeclaratorSuffix */
+altDeclaratorSuffix : '['']'
+                    ;
+
+memberFunctionAttributes : memberFunctionAttribute
+                         | memberFunctionAttribute memberFunctionAttributes
+                         ;
+
+memberFunctionAttribute
+    : spec_const
+    | spec_immutable
+    | spec_inout
+    | keyword_return
+    | spec_shared
+    | functionAttribute
+    ;
+
+functionAttribute: keyword_nothrow
+                 | keyword_pure
+                 | property
+                 ;
+property : '@' propertyIdentifier
+         | userDefinedAttribute
+         ;
+
+propertyIdentifier: "property"
+                  | "safe"
+                  | "trusted"
+                  | "system"
+                  | "disable"
+                  | "nogc"
+                  ;
+
+/* TODO: implement remaining rules. See: https://dlang.org/spec/grammar.html#UserDefinedAttribute */
+userDefinedAttribute : '@' identifier_;
 
 term    : number                { $$ = $1; }
         | identifier_           { $$ = $1; }

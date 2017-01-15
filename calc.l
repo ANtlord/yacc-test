@@ -9,7 +9,10 @@
 "alias"                {return keyword_alias;}
 "template"             {return keyword_template;}
 
+"return"               {return keyword_return;}
 "this"                 {return keyword_this;}
+"nothrow"              {return keyword_nothrow;}
+"pure"                 {return keyword_pure;}
 
 "auto"                 {return spec_auto;}
 "final"                {return spec_final;}
@@ -50,13 +53,17 @@
 ";"                    {return sym_dot_comma;}
 ","                    {return sym_comma;}
 
+
 "exit"                 {return exit_command;}
 "print"                {return print_command;}
 [_a-zA-Z][_a-zA-Z0-9]* {yylval.identifier = yytext; return identifier_;}
 [0-9]+                 {yylval.num = atoi(yytext); return number;}
 "("                    {return l_parenthes;}
 ")"                    {return r_parenthes;}
-" "                    {return space_;}
+"{"                    {return l_brace;}
+"}"                    {return r_brace;}
+[ \t\n]                ;
+.                      {ECHO; yyerror ("unexpected character");}
 
 %%
 int yywrap (void) {return 1;}
