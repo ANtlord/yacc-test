@@ -50,7 +50,7 @@
 "creal"                {return btype_creal;}
 "void"                 {return btype_void;}
 
-";"                    {return sym_dot_comma;}
+[;]                    {return yytext[0];}
 ","                    {return sym_comma;}
 
 
