@@ -46,6 +46,13 @@ void yyerror (char *s);
 %token spec_inout
 %token spec_shared
 
+%token funcattr_safe
+%token funcattr_property
+%token funcattr_trusted
+%token funcattr_system
+%token funcattr_disable
+%token funcattr_nogc
+
 %token btype_bool
 %token btype_byte
 %token btype_ubyte
@@ -71,6 +78,7 @@ void yyerror (char *s);
 
 %type <identifier> line term expr
 %type <identifier> classDeclaration
+%type <identifier> constructor
 
 %%
 
@@ -92,88 +100,90 @@ classDeclaration : keyword_class identifier_ ';'  { $$ = $2; }
                  ;
 
 aggregateBody : l_brace r_brace
-              /*| l_brace declDefs r_brace*/
+              | l_brace declDefs r_brace
               ;
 
-/*declDefs : declDef*/
-         /*| declDef declDefs*/
-         /*;*/
+declDefs : declDef
+         | declDef declDefs
+         ;
 
-/*declDef : constructor*/
-        /*;*/
+/* TODO: implement remaining rules. See: http://dlang.org/spec/grammar.html#DeclDef */
+declDef : constructor
+        ;
 
-/*constructor : keyword_this parameters*/
-            /*| keyword_this parameters memberFunctionAttributes*/
-            /*;*/
+constructor : keyword_this parameters ';' { $$ = "this"; } /* this(); | this(int a, int b); */
+            | keyword_this parameters memberFunctionAttributes ';' { $$ = "this"; } /* this() const */
+            ;
 
-/*parameters : l_parenthes r_parenthes*/
-           /*| l_parenthes parametersList r_parenthes*/
-           /*;*/
+parameters : l_parenthes r_parenthes /* () */
+           | l_parenthes parametersList r_parenthes /* (int a) | (int a, int b)*/
+           ;
 
-/*parametersList : parameter*/
-               /*| parameter sym_comma parametersList*/
-               /*;*/
+parametersList : parameter /* int a */
+               | parameter sym_comma parametersList /* int a, int b */
+               ;
 
 /*[> TODO: implement remaining rules. See: http://dlang.org/spec/function.html#Parameters <]*/
-/*parameter : inOut basicType declarator*/
-          /*| basicType declarator*/
-          /*;*/
+parameter : basicType declarator /* int a */
+          | inOut basicType declarator /* in int a | const ref int a | auto a */
+          ;
 
-/*inOut : inOutX*/
-      /*| inOut inOutX*/
-      /*;*/
+inOut : inOutX
+      | inOut inOutX
+      ;
 
-/*inOutX : spec_auto*/
-      /*| spec_final*/
-      /*| spec_in*/
-      /*| spec_lazy*/
-      /*| spec_out*/
-      /*| spec_ref*/
-      /*| spec_scope*/
-      /*| typeCtor*/
-      /*;*/
+/* TODO: implement remaining rules. See: http://dlang.org/spec/grammar.html#InOutX */
+inOutX : spec_auto
+      | spec_final
+      | spec_in
+      | spec_lazy
+      | spec_out
+      | spec_ref
+      | spec_scope
+      | typeCtor
+      ;
 
-/*typeCtor : spec_const*/
-         /*| spec_immutable*/
-         /*| spec_inout*/
-         /*| spec_shared*/
-         /*;*/
+typeCtor : spec_const
+         | spec_immutable
+         | spec_inout
+         | spec_shared
+         ;
 
 /*[> TODO: implement remaining rules. See: http://dlang.org/spec/declaration.html#BasicType <]*/
-/*basicType : basicTypeX*/
-          /*;*/
+basicType : basicTypeX
+          ;
 
-/*basicTypeX : btype_bool*/
-           /*| btype_byte*/
-           /*| btype_ubyte*/
-           /*| btype_short*/
-           /*| btype_ushort*/
-           /*| btype_int*/
-           /*| btype_uint*/
-           /*| btype_long*/
-           /*| btype_ulong*/
-           /*| btype_char*/
-           /*| btype_wchar*/
-           /*| btype_dchar*/
-           /*| btype_float*/
-           /*| btype_double*/
-           /*| btype_real*/
-           /*| btype_ifloat*/
-           /*| btype_idouble*/
-           /*| btype_ireal*/
-           /*| btype_cfloat*/
-           /*| btype_cdouble*/
-           /*| btype_creal*/
-           /*| btype_void*/
-           /*;*/
+basicTypeX : btype_bool
+           | btype_byte
+           | btype_ubyte
+           | btype_short
+           | btype_ushort
+           | btype_int
+           | btype_uint
+           | btype_long
+           | btype_ulong
+           | btype_char
+           | btype_wchar
+           | btype_dchar
+           | btype_float
+           | btype_double
+           | btype_real
+           | btype_ifloat
+           | btype_idouble
+           | btype_ireal
+           | btype_cfloat
+           | btype_cdouble
+           | btype_creal
+           | btype_void
+           ;
 
-/*declarator : varDeclarator*/
+declarator : varDeclarator
            /*| altDeclarator*/
-           /*;*/
+           ;
 
-/*varDeclarator: identifier_*/
+varDeclarator: identifier_
              /*| basicType2 identifier_*/
-             /*;*/
+             ;
 
 /*basicType2 : basicType2X*/
            /*| basicType2X basicType2*/
@@ -213,34 +223,34 @@ aggregateBody : l_brace r_brace
 /*altDeclaratorSuffix : '['']'*/
                     /*;*/
 
-/*memberFunctionAttributes : memberFunctionAttribute*/
-                         /*| memberFunctionAttribute memberFunctionAttributes*/
-                         /*;*/
+memberFunctionAttributes : memberFunctionAttribute
+                         | memberFunctionAttribute memberFunctionAttributes
+                         ;
 
-/*memberFunctionAttribute*/
-    /*: spec_const*/
-    /*| spec_immutable*/
-    /*| spec_inout*/
-    /*| keyword_return*/
-    /*| spec_shared*/
-    /*| functionAttribute*/
-    /*;*/
+memberFunctionAttribute
+    : spec_const
+    | spec_immutable
+    | spec_inout
+    | keyword_return
+    | spec_shared
+    | functionAttribute
+    ;
 
-/*functionAttribute: keyword_nothrow*/
-                 /*| keyword_pure*/
-                 /*| property*/
-                 /*;*/
-/*property : '@' propertyIdentifier*/
+functionAttribute: keyword_nothrow
+                 | keyword_pure
+                 | property
+                 ;
+property : '@' propertyIdentifier /* @safe | @property | @trusted ... */
          /*| userDefinedAttribute*/
-         /*;*/
+         ;
 
-/*propertyIdentifier: "property"*/
-                  /*| "safe"*/
-                  /*| "trusted"*/
-                  /*| "system"*/
-                  /*| "disable"*/
-                  /*| "nogc"*/
-                  /*;*/
+propertyIdentifier: funcattr_safe
+                  | funcattr_property
+                  | funcattr_trusted
+                  | funcattr_system
+                  | funcattr_disable
+                  | funcattr_nogc
+                  ;
 
 /*[> TODO: implement remaining rules. See: https://dlang.org/spec/grammar.html#UserDefinedAttribute <]*/
 /*userDefinedAttribute : '@' identifier_;*/

@@ -27,6 +27,13 @@
 "inout"                {return spec_inout;}
 "shared"               {return spec_shared;}
 
+"safe"                 {return funcattr_safe;}
+"property"             {return funcattr_property;}
+"trusted"              {return funcattr_trusted;}
+"system"               {return funcattr_system;}
+"disable"              {return funcattr_disable;}
+"nogc"                 {return funcattr_nogc;}
+
 "bool"                 {return btype_bool;}
 "byte"                 {return btype_byte;}
 "ubyte"                {return btype_ubyte;}
@@ -50,7 +57,7 @@
 "creal"                {return btype_creal;}
 "void"                 {return btype_void;}
 
-[;]                    {return yytext[0];}
+[;@]                    {return yytext[0];}
 ","                    {return sym_comma;}
 
 
